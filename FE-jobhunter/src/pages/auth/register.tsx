@@ -1,4 +1,4 @@
-import { Button, Divider, Form, Input, message, notification } from 'antd';
+import { Button, Divider, Form, Input,InputNumber, message, notification } from 'antd';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { callRegister } from 'config/api';
@@ -87,7 +87,7 @@ const RegisterPage = () => {
                                     { type: 'number', min: 16, max: 100, message: 'Tuổi phải từ 16 đến 100!' }
                                 ]}
                             >
-                                <Input type='number' placeholder="Nhập tuổi" />
+                                <InputNumber type='number' placeholder="Nhập tuổi" />
                             </Form.Item>
 
                             < Form.Item>

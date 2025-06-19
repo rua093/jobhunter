@@ -79,12 +79,6 @@ const UserResume = (props: any) => {
                 case 'REJECTED':
                     errorMessage = 'Không thể rút CV đã bị từ chối. CV này đã được xử lý.';
                     break;
-                case 'INTERVIEW':
-                    errorMessage = 'Không thể rút CV đang trong quá trình phỏng vấn. Vui lòng liên hệ nhà tuyển dụng.';
-                    break;
-                case 'HIRED':
-                    errorMessage = 'Không thể rút CV đã được tuyển dụng. Bạn đã được nhận vào làm việc.';
-                    break;
                 default:
                     errorMessage = 'Không thể rút CV với trạng thái hiện tại.';
             }
@@ -242,31 +236,6 @@ const UserResume = (props: any) => {
             dataIndex: "actions",
             width: 100,
             render(value, record, index) {
-                const isDisabled = record.status !== 'PENDING';
-                let tooltipText = '';
-                
-                if (isDisabled) {
-                    switch (record.status) {
-                        case 'REVIEWING':
-                            tooltipText = 'CV đang được xem xét, không thể rút';
-                            break;
-                        case 'APPROVED':
-                            tooltipText = 'CV đã được duyệt, không thể rút';
-                            break;
-                        case 'REJECTED':
-                            tooltipText = 'CV đã bị từ chối, không thể rút';
-                            break;
-                        case 'INTERVIEW':
-                            tooltipText = 'CV đang phỏng vấn, không thể rút';
-                            break;
-                        case 'HIRED':
-                            tooltipText = 'CV đã được tuyển dụng, không thể rút';
-                            break;
-                        default:
-                            tooltipText = 'Không thể rút CV với trạng thái hiện tại';
-                    }
-                }
-
                 return (
                     <Popconfirm
                         title="Xác nhận rút CV"
@@ -274,21 +243,19 @@ const UserResume = (props: any) => {
                         onConfirm={() => handleWithdrawCV(record)}
                         okText="Xác nhận"
                         cancelText="Hủy"
-                        disabled={isDisabled}
                     >
-                        <Tooltip title={tooltipText}>
+                        <Tooltip title="Rút CV">
                             <Button 
                                 type="primary" 
                                 danger 
                                 size="small"
-                                disabled={isDisabled}
                             >
                                 Rút CV
                             </Button>
                         </Tooltip>
                     </Popconfirm>
                 )
-            },
+            }
         },
     ];
 
@@ -520,16 +487,16 @@ const UserUpdateInfo = (props: { open: boolean; onSuccess?: () => void }) => {
                                 { required: true, message: 'Vui lòng nhập tuổi!' },
                                 {
                                     validator: (_, value) => {
-                                        if (value === undefined || value === null || value === '') {
-                                            return Promise.reject(new Error('Vui lòng nhập tuổi!'));
+                                        // Chỉ validate nếu có giá trị (không rỗng)
+                                        if (!value || value === '') {
+                                            return Promise.resolve();
                                         }
+    
                                         const strValue = String(value);
                                         if (strValue.includes('+') || strValue.includes('-')) {
                                             return Promise.reject(new Error('Tuổi không được chứa dấu + hoặc -!'));
                                         }
-                                        if (!/^\d+$/.test(strValue)) {
-                                            return Promise.reject(new Error('Tuổi chỉ được chứa số!'));
-                                        }
+
                                         const numValue = Number(value);
                                         if (isNaN(numValue)) {
                                             return Promise.reject(new Error('Tuổi phải là số!'));
@@ -540,8 +507,8 @@ const UserUpdateInfo = (props: { open: boolean; onSuccess?: () => void }) => {
                                         if (numValue < 16) {
                                             return Promise.reject(new Error('Tuổi phải từ 16 trở lên!'));
                                         }
-                                        if (numValue > 100) {
-                                            return Promise.reject(new Error('Tuổi không được quá 100!'));
+                                        if (numValue > 60) {
+                                            return Promise.reject(new Error('Tuổi không được quá 60!'));
                                         }
                                         return Promise.resolve();
                                     }
@@ -655,7 +622,7 @@ const UserUpdateInfo = (props: { open: boolean; onSuccess?: () => void }) => {
                                 mode="multiple" 
                                 options={optionsSkills}
                                 placeholder="Chọn kỹ năng (tối đa 10)"
-                                showSearch
+                                showSearch={false}
                                 allowClear
                                 filterOption={(input, option) =>
                                     (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
