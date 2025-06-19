@@ -1,7 +1,7 @@
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const assert = require('assert');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
 class TestHelper {
     constructor() {
@@ -15,7 +15,7 @@ class TestHelper {
         if (process.env.HEADLESS === 'true') {
             options.addArguments('--headless');
         }
-    
+        
         // Các thiết lập tối ưu khi chạy ChromeDriver
         options.addArguments('--no-sandbox');
         options.addArguments('--disable-dev-shm-usage');
@@ -39,7 +39,7 @@ class TestHelper {
             .forBrowser('chrome')
             .setChromeOptions(options)
             .build();
-    
+
         await this.driver.manage().setTimeouts({ implicit: 5000 });
         await this.driver.manage().window().maximize();
     }
@@ -126,7 +126,7 @@ class TestHelper {
         
         // Chỉ chờ upload thành công nếu không skip
         if (!skipWaitDone) {
-            await this.driver.wait(until.elementLocated(By.css('.ant-upload-list-item-done')), 15000);
+        await this.driver.wait(until.elementLocated(By.css('.ant-upload-list-item-done')), 15000);
         }
     }
 

@@ -16,6 +16,7 @@ async function debugTestCase1() {
         testHelper = new TestHelper();
         await testHelper.setupDriver();
         console.log('✅ Driver đã được khởi tạo thành công\n');
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Bước 2: Kiểm tra biến môi trường
         console.log('📋 BƯỚC 2: Kiểm tra biến môi trường...');
@@ -25,6 +26,7 @@ async function debugTestCase1() {
         console.log(`📍 TEST_JOB_ID: ${process.env.TEST_JOB_ID || '1'}`);
         console.log(`📍 TEST_JOB_SLUG: ${process.env.TEST_JOB_SLUG || 'CHƯA SET'}`);
         console.log('✅ Biến môi trường OK\n');
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Bước 3: Điều hướng đến trang chủ
         console.log('📋 BƯỚC 3: Điều hướng đến trang chủ...');
@@ -32,6 +34,7 @@ async function debugTestCase1() {
         let currentUrl = await testHelper.driver.getCurrentUrl();
         console.log(`📍 URL hiện tại: ${currentUrl}`);
         console.log('✅ Điều hướng trang chủ thành công\n');
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Bước 4: Đăng nhập với thông tin hợp lệ
         console.log('📋 BƯỚC 4: Đăng nhập với thông tin hợp lệ...');
@@ -40,6 +43,7 @@ async function debugTestCase1() {
             currentUrl = await testHelper.driver.getCurrentUrl();
             console.log(`📍 URL sau đăng nhập: ${currentUrl}`);
             console.log('✅ Đăng nhập thành công\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
             console.log('❌ LỖI: Đăng nhập thất bại');
             console.log('🔍 Lỗi chi tiết:', error.message);
@@ -49,10 +53,11 @@ async function debugTestCase1() {
         // Bước 5: Điều hướng đến trang chi tiết công việc
         console.log('📋 BƯỚC 5: Điều hướng đến trang chi tiết công việc...');
         try {
-            await testHelper.navigateToJobDetail(process.env.TEST_JOB_ID || '1');
+            await testHelper.navigateToJobDetail(process.env.TEST_JOB_ID || '1', process.env.TEST_JOB_SLUG);
             currentUrl = await testHelper.driver.getCurrentUrl();
             console.log(`📍 URL trang chi tiết: ${currentUrl}`);
             console.log('✅ Điều hướng trang chi tiết thành công\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
             console.log('❌ LỖI: Không thể điều hướng đến trang chi tiết');
             console.log('🔍 Lỗi chi tiết:', error.message);
@@ -64,6 +69,7 @@ async function debugTestCase1() {
         try {
             await testHelper.clickApplyButton();
             console.log('✅ Nhấp nút ứng tuyển thành công\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
             console.log('❌ LỖI: Không thể nhấp nút ứng tuyển');
             console.log('🔍 Lỗi chi tiết:', error.message);
@@ -77,8 +83,17 @@ async function debugTestCase1() {
             console.log(`📍 Tiêu đề modal: "${modalTitle}"`);
             assert.strictEqual(modalTitle, 'Ứng Tuyển Job');
             console.log('✅ Tiêu đề modal đúng\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Lấy thông tin tên công việc và công ty từ modal ứng tuyển
+            const infoElem = await testHelper.driver.findElement(By.xpath("//p[contains(., 'Bạn đang ứng tuyển công việc')]"));
+            const infoHtml = await infoElem.getAttribute('innerHTML');
+            const matches = infoHtml.match(/<b>(.*?)<\/b> tại <b>(.*?)<\/b>/);
+            assert.ok(matches && matches.length === 3, 'Không lấy được tên công việc và công ty');
+            var jobName = matches[1].trim();
+            var companyName = matches[2].trim();
         } catch (error) {
-            console.log('❌ LỖI: Tiêu đề modal không đúng');
+            console.log('❌ LỖI: Tiêu đề modal không đúng hoặc không lấy được thông tin job/company');
             console.log('🔍 Lỗi chi tiết:', error.message);
             throw error;
         }
@@ -90,6 +105,7 @@ async function debugTestCase1() {
             await testHelper.createTestFile(validCVPath, 'Đây là nội dung CV hợp lệ');
             console.log(`📍 File CV đã tạo: ${validCVPath}`);
             console.log('✅ Tạo file CV thành công\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
             console.log('❌ LỖI: Không thể tạo file CV');
             console.log('🔍 Lỗi chi tiết:', error.message);
@@ -101,9 +117,21 @@ async function debugTestCase1() {
         try {
             const validCVPath = path.resolve(__dirname, './test-files/valid-cv.pdf');
             await testHelper.uploadCV(validCVPath);
-            console.log('✅ Tải lên CV thành công\n');
+            // Kiểm tra thông báo upload thành công
+            await testHelper.waitForElement('.ant-message-success', 10000);
+            let uploadMsgText = '';
+            for (let i = 0; i < 10; i++) {
+                const uploadMsgElem = await testHelper.driver.findElement(By.css('.ant-message-success'));
+                uploadMsgText = await uploadMsgElem.getText();
+                if (uploadMsgText && uploadMsgText.includes('đã tải lên thành công')) break;
+                await new Promise(r => setTimeout(r, 200));
+            }
+            console.log(`📍 Thông báo upload: "${uploadMsgText}"`);
+            assert.ok(uploadMsgText.includes('đã tải lên thành công'));
+            console.log('✅ Tải lên CV thành công và có thông báo đúng\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
-            console.log('❌ LỖI: Không thể tải lên CV');
+            console.log('❌ LỖI: Không thể tải lên CV hoặc không có thông báo đúng');
             console.log('🔍 Lỗi chi tiết:', error.message);
             throw error;
         }
@@ -113,47 +141,60 @@ async function debugTestCase1() {
         try {
             const applyButton = await testHelper.driver.findElement(By.css('.ant-btn-primary'));
             await applyButton.click();
-            console.log('✅ Nhấp nút ứng tuyển trong modal thành công\n');
-        } catch (error) {
-            console.log('❌ LỖI: Không thể nhấp nút ứng tuyển trong modal');
-            console.log('🔍 Lỗi chi tiết:', error.message);
-            throw error;
-        }
-        
-        // Bước 11: Chờ thông báo thành công
-        console.log('📋 BƯỚC 11: Chờ thông báo thành công...');
-        try {
+            // Kiểm tra thông báo ứng tuyển thành công
             await testHelper.waitForElement('.ant-message-success', 10000);
-            console.log('✅ Thông báo thành công xuất hiện\n');
+            let applyMsgText = '';
+            for (let i = 0; i < 15; i++) {
+                const applyMsgElem = await testHelper.driver.findElement(By.css('.ant-message-success'));
+                applyMsgText = await applyMsgElem.getText();
+                if (applyMsgText && applyMsgText.includes('Ứng tuyển thành công')) break;
+                await new Promise(r => setTimeout(r, 200));
+            }
+            console.log(`📍 Thông báo ứng tuyển: "${applyMsgText}"`);
+            assert.ok(applyMsgText.includes('Ứng tuyển thành công'));
+            console.log('✅ Ứng tuyển thành công và có thông báo đúng\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
-            console.log('❌ LỖI: Không thấy thông báo thành công');
+            console.log('❌ LỖI: Không thể nhấp nút ứng tuyển trong modal hoặc không có thông báo đúng');
             console.log('🔍 Lỗi chi tiết:', error.message);
             throw error;
         }
-        
-        // Bước 12: Xác minh thông báo thành công
-        console.log('📋 BƯỚC 12: Xác minh thông báo thành công...');
+
+        // Bước 11: Chờ 2 giây để backend cập nhật và frontend load lại
+        console.log('📋 BƯỚC 11: Chờ 2 giây để cập nhật dữ liệu và modal đóng hẳn...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('✅ Đã chờ 2 giây\n');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Bước 12: (BỎ QUA - không kiểm tra lại thông báo thành công)
+
+        // Bước 13: Kiểm tra công việc đã xuất hiện trong modal quản lý tài khoản...
+        console.log('📋 BƯỚC 13: Kiểm tra công việc đã xuất hiện trong modal quản lý tài khoản...');
         try {
-            const successMessage = await testHelper.driver.findElement(By.css('.ant-message-success'));
-            const messageText = await successMessage.getText();
-            console.log(`📍 Nội dung thông báo: "${messageText}"`);
-            assert.ok(
-                messageText.includes('Ứng tuyển thành công') ||
-                messageText.includes('đã tải lên thành công')
-            );
-            console.log('✅ Thông báo thành công đúng\n');
+            // Mở modal quản lý tài khoản
+            await testHelper.driver.findElement(By.css('.ant-avatar')).click();
+            await testHelper.driver.findElement(By.xpath("//li[contains(@class, 'ant-dropdown-menu-item')]//label[text()='Quản lý tài khoản']")).click();
+            await testHelper.waitForElement('.ant-modal-title');
+            // Lấy dòng cuối cùng của bảng Rải CV
+            const rows = await testHelper.driver.findElements(By.css('.ant-table-tbody > tr'));
+            assert.ok(rows.length > 0, 'Không có dòng nào trong bảng Rải CV');
+            const lastRow = rows[rows.length - 1];
+            const cells = await lastRow.findElements(By.css('td'));
+            const companyCellText = await cells[1].getText(); // Cột "Công Ty"
+            const jobCellText = await cells[2].getText();     // Cột "Job title"
+            assert.strictEqual(companyCellText.trim(), companyName, 'Tên công ty không khớp');
+            assert.strictEqual(jobCellText.trim(), jobName, 'Tên công việc không khớp');
+            console.log('✅ Công việc vừa ứng tuyển đã xuất hiện trong modal quản lý tài khoản\n');
+            await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
-            console.log('❌ LỖI: Thông báo thành công không đúng');
+            console.log('❌ LỖI: Công việc vừa ứng tuyển không xuất hiện trong modal quản lý tài khoản');
             console.log('🔍 Lỗi chi tiết:', error.message);
             throw error;
         }
-        
-        // Bước 13: Xác minh modal đã đóng (BỎ QUA - chỉ cần thông báo thành công)
-        console.log('📋 BƯỚC 13: Bỏ qua kiểm tra modal đã đóng (chỉ cần thông báo thành công)');
-        console.log('✅ Bỏ qua bước kiểm tra modal đã đóng\n');
         
         console.log('🎉 TẤT CẢ CÁC BƯỚC ĐÃ HOÀN THÀNH THÀNH CÔNG!');
         console.log('✅ Test Case 1: Ứng tuyển thành công với hồ sơ hợp lệ - PASSED');
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
     } catch (error) {
         console.log('\n❌ TEST CASE 1 THẤT BẠI!');

@@ -203,7 +203,7 @@ const ApplyModal = (props: IProps) => {
                 "application/msword",
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ].includes(file.type);
-            const forbiddenChars = /[\\/:*?"<>|]/;
+            const forbiddenChars = /[\\/:*?"<>|@#]/;
             const containsSpace = /\s/; // Kiểm tra có khoảng trắng
             const isValidFileName = file.name && file.name.trim().length > 0 && !forbiddenChars.test(file.name) && !containsSpace.test(file.name);
             if (!isValidFileName) {
@@ -255,7 +255,7 @@ const ApplyModal = (props: IProps) => {
                 setUrlCV("");
                 return;
             }
-            const forbiddenChars = /[\\/:*?"<>|]/;
+            const forbiddenChars = /[\\/:*?"<>|@#]/;
             const containsSpace = /\s/; // Kiểm tra có khoảng trắng
             const isValidFileName = file.name && file.name.trim().length > 0 && !forbiddenChars.test(file.name) && !containsSpace.test(file.name);
             if (!isValidFileName) {
