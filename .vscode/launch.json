@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "JobhunterApplication",
+            "request": "launch",
+            "mainClass": "vn.hoidanit.jobhunter.JobhunterApplication",
+            "projectName": "jobhunter"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-JobhunterApplication<jobhunter-BE-jobhunter>",
             "request": "launch",
             "cwd": "${workspaceFolder}",
